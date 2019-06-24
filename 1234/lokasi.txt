@@ -1,0 +1,3 @@
+Latitude: -6.229443 
+Longitude: 106.818948 
+Distance: 321.692861054182
