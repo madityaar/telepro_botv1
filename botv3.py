@@ -201,9 +201,9 @@ class Tiket():
         url = URL_FILE + file_path
         urllib.request.urlretrieve(url,str(self.noTiket)+"/"+str(self.noTiket)+"-"+str(namaFile)+".jpg")
         
-    def save_text(self, namafile):
+    def save_text(self,isitext, namafile):
         file = open(str(self.noTiket)+"/"+namafile+".txt","w") 
-        file.write(self.keterangan)
+        file.write(isitext)
         file.close()
         
     def calc_distance(self):
