@@ -12,24 +12,35 @@ import os
 TOKEN = "743391112:AAF60UYlsEhkgb9qU-APK5nqxffhTb9LMbY"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 URL_FILE = "https://api.telegram.org/file/bot{}/".format(TOKEN)
+###########
 
-try:
-    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
-                         user="root",         # your username
-                         passwd="",  # your password
-                         db="telegram_bot")        # name of the data base
+db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                     user="root",         # your username
+                     passwd="",  # your password
+                     db="dtest")        # name of the data base
 
-    # you must create a Cursor object. It will let
-    # you execute all the queries you need
-    cur = db.cursor()
-except:
-    print("database not connected")
+# you must create a Cursor object. It will let
+# you execute all the queries you need
+cur = db.cursor()
+
+print("database not connected")
     
 def insert_row(data):
     cur.execute("INSERT INTO tiket (no_tiket,gambar_sebelum,gambar_sesudah,keterangan,latitude,longitude) VALUES ('"+data['no_tiket']+"','"+data['gambar_sebelum']+"','"+data['gambar_sesudah']+"','"+data['keterangan']+"','"+data['latitude'] +"','"+data['longitude']+"')")
     db.commit()
     db.close()
-    
+
+def select_user(idchat):
+    sql="select isApproved from UserApproval where idUserApproval='"+str(idchat)+"'"
+    cur.execute(sql)
+    records = cur.fetchall()
+    return records
+
+def insert_row_user(data):
+    sql=""
+    cur.execute(sql)
+    db.commit()
+    db.close()
 ###########
 
 data1={"keyboard": [["/input_tiket"]],"one_time_keyboard": True}
@@ -91,7 +102,7 @@ class Update():
             
 
 class Tiket():
-    def __init__(self, chatId='',noTiket='',keterangan = '',gambarSebelum = '',gambarProgres = '',gambarSesudah = '',latitude='',longitude='', state="none"):
+    def __init__(self, chatId='',noTiket='',keterangan = '',gambarSebelum = '',gambarProgres = '',gambarSesudah = '',latitude='',longitude='', state="none", isApproved=0):
         self.chatId = str(chatId)
         self.noTiket = noTiket
         self.keterangan = keterangan 
@@ -101,7 +112,7 @@ class Tiket():
         self.latitude= latitude
         self.longitude= longitude
         self.state= state
-        
+        self.isApproved=isApproved
     def setChatId(self,chatId):
         self.chatId = chatId
     
@@ -256,86 +267,90 @@ def main():
     while True:
         update.setKonten(get_updates(update.offset))
         if(not bool(tiket[update.chatId])):
-            tiket[update.chatId]=Tiket(chatId=update.chatId)
+            if(bool(select_user(update.chatId))):
+                tiket[update.chatId]=Tiket(chatId=update.chatId,isApproved=1)
+            else:
+                tiket[update.chatId]=Tiket(chatId=update.chatId,isApproved=0)
         if (update.konten, update.chatId) != last_textchat:
             if(update.chatId!=0):
-                if(tiket[update.chatId].state=="none"):
-                    if "/input_tiket" in update.konten[0]:
-                        tiket[update.chatId].setState("notiket")
-                        remove_keyboard("Silakan input nomor tiket",update.chatId)
-                    if(tiket[update.chatId].noTiket!=''):
-                        if "/input_keterangan" in update.konten[0]:
-                            tiket[update.chatId].setState("keterangan")
-                            remove_keyboard("Silakan input keterangan",update.chatId)
-                        elif "/input_gambar_sebelum" in update.konten[0]:
-                            tiket[update.chatId].setState("gambar sebelum")
-                            remove_keyboard("Silakan input gambar",update.chatId)
-                        elif "/input_gambar_progres" in update.konten[0]:
-                            tiket[update.chatId].setState("gambar progres")
-                            remove_keyboard("Silakan input gambar",update.chatId)
-                        elif "/input_gambar_sesudah" in update.konten[0]:
-                            tiket[update.chatId].setState("gambar sesudah")
-                            remove_keyboard("Silakan input gambar",update.chatId)
-                        elif "/input_lokasi" in update.konten[0]:
-                            tiket[update.chatId].setState("lokasi")
-                            reply_keyboard("Silakan input lokasi",update.chatId,json_req_location)
-                        elif "/input_selesai" in update.konten[0]:
-                            tiket[update.chatId].saveData()
-                        elif "/review_tiket" in update.konten[0]:
-                            tiket[update.chatId].reviewTiket()
-                        elif "Edit Data" in update.konten[0]:
-                            reply_keyboard("Silakan pilih data yang akan diedit",update.chatId,json_all_comm)
-                        else:
-                            tiket[update.chatId].send_message("Silakan masukkan perintah yang sesuai")
-                    elif (tiket[update.chatId].state!="notiket"):
-                        reply_keyboard("Silakan masukkan nomor tiket terlebih dahulu",update.chatId,json_input_tiket)
-                else:
-                    if(tiket[update.chatId].state=="notiket"):
-                        if(update.tipeKonten=="text"):
-                            tiket[update.chatId].setNoTiket(update.konten[0])
-                            reply_keyboard("Nomor Tiket: "+tiket[update.chatId].noTiket+" berhasil diinput",update.chatId,json_all_comm)
-                            tiket[update.chatId].setState("none")
-                        else:
-                            tiket[update.chatId].send_message("Nomor tiket harus berupa teks")
-                    elif(tiket[update.chatId].state=="keterangan"):
-                        if(update.tipeKonten=="text"):
-                            tiket[update.chatId].setKeterangan(update.konten[0])
-                            reply_keyboard("Keterangan berhasil terinput",update.chatId,json_all_comm)
-                            tiket[update.chatId].setState("none")
-                        else:
-                            tiket[update.chatId].send_message("Isi keterangan harus berupa teks")
-                    elif(tiket[update.chatId].state=="gambar sebelum"):
-                        if(update.tipeKonten=="gambar"):
-                            tiket[update.chatId].setGambar(update.konten[0],"sebelum")
-                            reply_keyboard("Gambar tampak 'sebelum' berhasil terinput",update.chatId,json_all_comm)
-                            tiket[update.chatId].setState("none")
-                        else:
-                            tiket[update.chatId].send_message("Input gambar harus berupa gambar")
-                    elif(tiket[update.chatId].state=="gambar progres"):
-                        if(update.tipeKonten=="gambar"):
-                            tiket[update.chatId].setGambar(update.konten[0],"progres")
-                            reply_keyboard("Gambar tampak 'progres' berhasil terinput",update.chatId,json_all_comm)
-                            tiket[update.chatId].setState("none")
-                        else:
-                            tiket[update.chatId].send_message("Input gambar harus berupa gambar")
-                    elif(tiket[update.chatId].state=="gambar sesudah"):
-                        if(update.tipeKonten=="gambar"):
-                            tiket[update.chatId].setGambar(update.konten[0],"sesudah")
-                            reply_keyboard("Gambar tampak 'sesudah' berhasil terinput",update.chatId,json_all_comm)
-                            tiket[update.chatId].setState("none")
-                        else:
-                            tiket[update.chatId].send_message("Input gambar harus berupa gambar")
-                    elif(tiket[update.chatId].state=="lokasi"):
-                        if(update.tipeKonten=="location"):
-                            tiket[update.chatId].setLokasi(update.konten[0],update.konten[1])
-                            reply_keyboard("Lokasi berhasil terinput",update.chatId,json_all_comm)
-                            tiket[update.chatId].setState("none")
-                        else:
-                            tiket[update.chatId].send_message("Input lokasi harus berupa lokasi")
-                try:
-                    tiket[update.chatId].print_all()
-                except AttributeError:
-                    True
+                if(tiket[update.chatId].isApproved==1):
+                    if(tiket[update.chatId].state=="none"):
+                        if "/input_tiket" in update.konten[0]:
+                            tiket[update.chatId].setState("notiket")
+                            remove_keyboard("Silakan input nomor tiket",update.chatId)
+                        if(tiket[update.chatId].noTiket!=''):
+                            if "/input_keterangan" in update.konten[0]:
+                                tiket[update.chatId].setState("keterangan")
+                                remove_keyboard("Silakan input keterangan",update.chatId)
+                            elif "/input_gambar_sebelum" in update.konten[0]:
+                                tiket[update.chatId].setState("gambar sebelum")
+                                remove_keyboard("Silakan input gambar",update.chatId)
+                            elif "/input_gambar_progres" in update.konten[0]:
+                                tiket[update.chatId].setState("gambar progres")
+                                remove_keyboard("Silakan input gambar",update.chatId)
+                            elif "/input_gambar_sesudah" in update.konten[0]:
+                                tiket[update.chatId].setState("gambar sesudah")
+                                remove_keyboard("Silakan input gambar",update.chatId)
+                            elif "/input_lokasi" in update.konten[0]:
+                                tiket[update.chatId].setState("lokasi")
+                                reply_keyboard("Silakan input lokasi",update.chatId,json_req_location)
+                            elif "/input_selesai" in update.konten[0]:
+                                tiket[update.chatId].saveData()
+                            elif "/review_tiket" in update.konten[0]:
+                                tiket[update.chatId].reviewTiket()
+                            elif "Edit Data" in update.konten[0]:
+                                reply_keyboard("Silakan pilih data yang akan diedit",update.chatId,json_all_comm)
+                            else:
+                                tiket[update.chatId].send_message("Silakan masukkan perintah yang sesuai")
+                        elif (tiket[update.chatId].state!="notiket"):
+                            reply_keyboard("Silakan masukkan nomor tiket terlebih dahulu",update.chatId,json_input_tiket)
+                    else:
+                        if(tiket[update.chatId].state=="notiket"):
+                            if(update.tipeKonten=="text"):
+                                tiket[update.chatId].setNoTiket(update.konten[0])
+                                reply_keyboard("Nomor Tiket: "+tiket[update.chatId].noTiket+" berhasil diinput",update.chatId,json_all_comm)
+                                tiket[update.chatId].setState("none")
+                            else:
+                                tiket[update.chatId].send_message("Nomor tiket harus berupa teks")
+                        elif(tiket[update.chatId].state=="keterangan"):
+                            if(update.tipeKonten=="text"):
+                                tiket[update.chatId].setKeterangan(update.konten[0])
+                                reply_keyboard("Keterangan berhasil terinput",update.chatId,json_all_comm)
+                                tiket[update.chatId].setState("none")
+                            else:
+                                tiket[update.chatId].send_message("Isi keterangan harus berupa teks")
+                        elif(tiket[update.chatId].state=="gambar sebelum"):
+                            if(update.tipeKonten=="gambar"):
+                                tiket[update.chatId].setGambar(update.konten[0],"sebelum")
+                                reply_keyboard("Gambar tampak 'sebelum' berhasil terinput",update.chatId,json_all_comm)
+                                tiket[update.chatId].setState("none")
+                            else:
+                                tiket[update.chatId].send_message("Input gambar harus berupa gambar")
+                        elif(tiket[update.chatId].state=="gambar progres"):
+                            if(update.tipeKonten=="gambar"):
+                                tiket[update.chatId].setGambar(update.konten[0],"progres")
+                                reply_keyboard("Gambar tampak 'progres' berhasil terinput",update.chatId,json_all_comm)
+                                tiket[update.chatId].setState("none")
+                            else:
+                                tiket[update.chatId].send_message("Input gambar harus berupa gambar")
+                        elif(tiket[update.chatId].state=="gambar sesudah"):
+                            if(update.tipeKonten=="gambar"):
+                                tiket[update.chatId].setGambar(update.konten[0],"sesudah")
+                                reply_keyboard("Gambar tampak 'sesudah' berhasil terinput",update.chatId,json_all_comm)
+                                tiket[update.chatId].setState("none")
+                            else:
+                                tiket[update.chatId].send_message("Input gambar harus berupa gambar")
+                        elif(tiket[update.chatId].state=="lokasi"):
+                            if(update.tipeKonten=="location"):
+                                tiket[update.chatId].setLokasi(update.konten[0],update.konten[1])
+                                reply_keyboard("Lokasi berhasil terinput",update.chatId,json_all_comm)
+                                tiket[update.chatId].setState("none")
+                            else:
+                                tiket[update.chatId].send_message("Input lokasi harus berupa lokasi")
+                    try:
+                        tiket[update.chatId].print_all()
+                    except AttributeError:
+                        True
             last_textchat = (update.konten, update.chatId)
             
 if __name__ == '__main__':
