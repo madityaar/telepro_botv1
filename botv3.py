@@ -6,6 +6,8 @@ import math
 from collections import defaultdict
 import MySQLdb
 import os
+import datetime
+import glob
 #from tiket2 import Tiket, Update
 
 
@@ -13,24 +15,24 @@ TOKEN = "743391112:AAF60UYlsEhkgb9qU-APK5nqxffhTb9LMbY"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 URL_FILE = "https://api.telegram.org/file/bot{}/".format(TOKEN)
 ###########
-
-db = MySQLdb.connect(host="localhost",    # your host, usually localhost
-                     user="root",         # your username
-                     passwd="",  # your password
-                     db="dtest")        # name of the data base
-
-# you must create a Cursor object. It will let
-# you execute all the queries you need
-cur = db.cursor()
-
-print("database not connected")
+try:
+    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                         user="root",         # your username
+                         passwd="",  # your password
+                         db="dtest")        # name of the data base
+    
+    # you must create a Cursor object. It will let
+    # you execute all the queries you need
+    cur = db.cursor()
+except:
+    print("database not connected")
     
 def insert_row(data):
     cur.execute("INSERT INTO tiket (no_tiket,gambar_sebelum,gambar_sesudah,keterangan,latitude,longitude) VALUES ('"+data['no_tiket']+"','"+data['gambar_sebelum']+"','"+data['gambar_sesudah']+"','"+data['keterangan']+"','"+data['latitude'] +"','"+data['longitude']+"')")
     db.commit()
     db.close()
 
-def select_user(idchat):
+def isApproved(idchat):
     sql="select isApproved from UserApproval where idUserApproval='"+str(idchat)+"'"
     cur.execute(sql)
     records = cur.fetchall()
@@ -41,6 +43,24 @@ def insert_row_user(data):
     cur.execute(sql)
     db.commit()
     db.close()
+
+def update_row_odp(tiket,dist):
+    sql="update mytable set photo_before='"+tiket.noTiket+"-a"+"', photo_process='"+tiket.noTiket+"-b"+"', photo_after='"+tiket.noTiket+"-c"+"', longitude_u="+str(tiket.longitude)+", latitude_u="+str(tiket.longitude)+", distance="+str(dist)+", updated_by="+tiket.chatId+", updated_date=SYSDATE(),keterangan='"+tiket.keterangan+"' where ticket_id='"+tiket.noTiket+"'"
+    cur.execute(sql)
+    db.commit()
+    db.close()
+
+def daftar(chatid,array):
+    sql="INSERT INTO userapproval VALUES ('"+str(chatid)+"','"+array[0]+"','"+array[1].upper()+"','"+array[2].upper()+"',1)"
+    cur.execute(sql)
+    db.commit()
+    db.close()
+
+def select_ticket(ticket):
+    sql="select ticket_id,ODP, longitude, latitude from mytable where ticket_id='"+str(ticket)+"'"
+    cur.execute(sql)
+    records = cur.fetchall()
+    return records[0]
 ###########
 
 data1={"keyboard": [["/input_tiket"]],"one_time_keyboard": True}
@@ -102,7 +122,7 @@ class Update():
             
 
 class Tiket():
-    def __init__(self, chatId='',noTiket='',keterangan = '',gambarSebelum = '',gambarProgres = '',gambarSesudah = '',latitude='',longitude='', state="none", isApproved=0):
+    def __init__(self, chatId='',noTiket='',keterangan = '',gambarSebelum = '',gambarProgres = '',gambarSesudah = '',latitude='',longitude='', state="none", isApproved=0, ODP={"nama":"","lat":None,"long":None}):
         self.chatId = str(chatId)
         self.noTiket = noTiket
         self.keterangan = keterangan 
@@ -113,6 +133,7 @@ class Tiket():
         self.longitude= longitude
         self.state= state
         self.isApproved=isApproved
+        self.ODP=ODP
     def setChatId(self,chatId):
         self.chatId = chatId
     
@@ -122,8 +143,15 @@ class Tiket():
     def setState(self,state):
         self.state = state
     
+    def setODP(self,records):
+        self.ODP["nama"]=records[1]
+        self.ODP["lat"]=float(records[2])
+        self.ODP["long"]=float(records[3])
+    
     def setKeterangan(self,keterangan):
         self.keterangan = keterangan
+    def setIsApproved(self, isApproved):
+        self.isApproved = isApproved
     
     def setGambar(self,fileId,nama):
         if(nama=='sebelum'):
@@ -150,19 +178,29 @@ class Tiket():
         print("state: "+self.state+"\n")
     
     def saveData(self):
+        now = datetime.datetime.now()
+        
+        file_path=str(now.year)+"/"+str(now.month)
         try:
-            os.mkdir(self.noTiket)
+            os.mkdir(str(now.year))
+            os.mkdir(file_path)
         except FileExistsError:
             True
         try:
-            self.save_file(self.gambarSebelum,'sebelum')
-            self.save_file(self.gambarProgres,'progres')
-            self.save_file(self.gambarSesudah,'sesudah')
-            self.save_text(self.keterangan,'keterangan')
+            dist=self.calc_distance()
             
-            loc_lengkap='Latitude: '+str(self.latitude)+' \nLongitude: '+str(self.longitude)+' \nDistance: '+str(self.calc_distance())
-            self.save_text(loc_lengkap,'lokasi')
-                                
+            try:
+                for name in glob.glob(file_path+'/'+self.noTiket+'?.txt'):
+                    os.remove(name)
+                self.save_file(self.gambarSebelum,file_path+"/"+self.noTiket+'-a.jpg')
+                self.save_file(self.gambarProgres,file_path+"/"+self.noTiket+'-b.jpg')
+                self.save_file(self.gambarSesudah,file_path+"/"+self.noTiket+'-c.jpg')
+            except:
+                True
+            try:
+                update_row_odp(self,dist)
+            except (MySQLdb.Error, MySQLdb.Warning) as e:
+                print(e)
             self.send_message("Tiket dengan No. "+self.noTiket+" selesai diinputkan")
             
             self.noTiket = ''
@@ -205,12 +243,13 @@ class Tiket():
         else:
             reply_keyboard("Data belum lengkap. Sila lengkapi kembali",self.chatId,json_all_comm)
         
-    def save_file(self, fileId, namaFile):
+    def save_file(self, fileId,path):
         url = URL + "getFile?file_id={}".format(fileId)
         js = get_json_from_url(url)
         file_path = js["result"]["file_path"]
         url = URL_FILE + file_path
-        urllib.request.urlretrieve(url,str(self.noTiket)+"/"+str(self.noTiket)+"-"+str(namaFile)+".jpg")
+        print(path)
+        urllib.request.urlretrieve(url,path)
         
     def save_text(self,isitext, namafile):
         file = open(str(self.noTiket)+"/"+namafile+".txt","w") 
@@ -218,8 +257,8 @@ class Tiket():
         file.close()
         
     def calc_distance(self):
-        lat2=-6.229697
-        lon2=106.816049
+        lat2=self.ODP['lat']
+        lon2=self.ODP['long']
         R = 6371e3  #metres
         o1 = math.radians(self.latitude)
         o2 = math.radians(lat2)
@@ -242,6 +281,8 @@ class Tiket():
     def send_location(self):
         url = URL + "sendlocation?chat_id={}&latitude={}&longitude={}".format(self.chatId, self.latitude, self.longitude)
         get_url(url)
+        
+        
         
 
 def get_url(url):
@@ -267,7 +308,7 @@ def main():
     while True:
         update.setKonten(get_updates(update.offset))
         if(not bool(tiket[update.chatId])):
-            if(bool(select_user(update.chatId))):
+            if(bool(isApproved(update.chatId))):
                 tiket[update.chatId]=Tiket(chatId=update.chatId,isApproved=1)
             else:
                 tiket[update.chatId]=Tiket(chatId=update.chatId,isApproved=0)
@@ -307,9 +348,15 @@ def main():
                     else:
                         if(tiket[update.chatId].state=="notiket"):
                             if(update.tipeKonten=="text"):
-                                tiket[update.chatId].setNoTiket(update.konten[0])
-                                reply_keyboard("Nomor Tiket: "+tiket[update.chatId].noTiket+" berhasil diinput",update.chatId,json_all_comm)
-                                tiket[update.chatId].setState("none")
+                                records=None
+                                records=select_ticket(update.konten[0])
+                                if(bool(records)):
+                                    tiket[update.chatId].setNoTiket(update.konten[0])
+                                    tiket[update.chatId].setODP(records)
+                                    reply_keyboard("Nomor Tiket: "+tiket[update.chatId].noTiket+" berhasil diinput",update.chatId,json_all_comm)
+                                    tiket[update.chatId].setState("none")
+                                else:
+                                    tiket[update.chatId].send_message("Tiket yang diinputkan tidak terdaftar. Mohon masukkan kembali")
                             else:
                                 tiket[update.chatId].send_message("Nomor tiket harus berupa teks")
                         elif(tiket[update.chatId].state=="keterangan"):
@@ -351,6 +398,25 @@ def main():
                         tiket[update.chatId].print_all()
                     except AttributeError:
                         True
+                else:
+                    if(tiket[update.chatId].state=="daftar"):
+                        if(update.tipeKonten=="text"):
+                            array = update.konten[0].split("_")
+                            try:
+                                daftar(update.chatId,array)
+                                tiket[update.chatId].send_message("Selesai terdaftar")
+                                tiket[update.chatId].setIsApproved(1)
+                                tiket[update.chatId].setState("none")
+                            except:
+                                tiket[update.chatId].send_message("Format yang dikirimkan salah")
+                    elif(tiket[update.chatId].state=="none"):
+                        if "/daftar" in update.konten[0]:
+                            tiket[update.chatId].setState("daftar")
+                            tiket[update.chatId].send_message("kirim dengan format: NIK_NAMA_LOKER")
+                        else:    
+                            tiket[update.chatId].send_message("ID Anda belum terdaftar atau belum mendapat izin. Silahkan mendaftar /daftar")
+                    
+                        
             last_textchat = (update.konten, update.chatId)
             
 if __name__ == '__main__':
