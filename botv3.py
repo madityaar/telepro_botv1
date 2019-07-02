@@ -199,9 +199,10 @@ class Tiket():
                 True
             try:
                 update_row_odp(self,dist)
+                self.send_message("Tiket dengan No. "+self.noTiket+" selesai diinputkan")
             except (MySQLdb.Error, MySQLdb.Warning) as e:
                 print(e)
-            self.send_message("Tiket dengan No. "+self.noTiket+" selesai diinputkan")
+                self.send_message(e)
             
             self.noTiket = ''
             self.keterangan = '' 
@@ -348,22 +349,28 @@ def main():
                     else:
                         if(tiket[update.chatId].state=="notiket"):
                             if(update.tipeKonten=="text"):
-                                records=None
-                                records=select_ticket(update.konten[0])
-                                if(bool(records)):
-                                    tiket[update.chatId].setNoTiket(update.konten[0])
-                                    tiket[update.chatId].setODP(records)
-                                    reply_keyboard("Nomor Tiket: "+tiket[update.chatId].noTiket+" berhasil diinput",update.chatId,json_all_comm)
-                                    tiket[update.chatId].setState("none")
+                                if(len(update.konten[0])==10):
+                                    records=None
+                                    records=select_ticket(update.konten[0])
+                                    if(bool(records)):
+                                        tiket[update.chatId].setNoTiket(update.konten[0])
+                                        tiket[update.chatId].setODP(records)
+                                        reply_keyboard("Nomor Tiket: "+tiket[update.chatId].noTiket+" berhasil diinput",update.chatId,json_all_comm)
+                                        tiket[update.chatId].setState("none")
+                                    else:
+                                        tiket[update.chatId].send_message("Tiket yang diinputkan tidak terdaftar. Mohon masukkan kembali")
                                 else:
-                                    tiket[update.chatId].send_message("Tiket yang diinputkan tidak terdaftar. Mohon masukkan kembali")
+                                    tiket[update.chatId].send_message("Tiket harus terdiri 10 karakter")
                             else:
                                 tiket[update.chatId].send_message("Nomor tiket harus berupa teks")
                         elif(tiket[update.chatId].state=="keterangan"):
                             if(update.tipeKonten=="text"):
-                                tiket[update.chatId].setKeterangan(update.konten[0])
-                                reply_keyboard("Keterangan berhasil terinput",update.chatId,json_all_comm)
-                                tiket[update.chatId].setState("none")
+                                if(len(update.konten[0])<=30):
+                                    tiket[update.chatId].setKeterangan(update.konten[0])
+                                    reply_keyboard("Keterangan berhasil terinput",update.chatId,json_all_comm)
+                                    tiket[update.chatId].setState("none")
+                                else:
+                                    tiket[update.chatId].send_message("Keterangan tidak boleh lebih dari 30 karakter")
                             else:
                                 tiket[update.chatId].send_message("Isi keterangan harus berupa teks")
                         elif(tiket[update.chatId].state=="gambar sebelum"):
