@@ -59,8 +59,10 @@ def select_ticket(ticket):
     empty=()
     records = cur.fetchall()
     if(records==empty):
+        print('a')
         return None
     else:
+        print('b')
         return records[0]
 ###########
 
@@ -134,6 +136,97 @@ class Update():
         except KeyError:
             ###menghandle edited message agar bot tidak crash
             self.offset = updates["result"][last_update]["update_id"]
+            
+    def cek_command(self,tiket):
+        if "/input_tiket" in self.konten[0]:
+            tiket[self.chatId].setState("notiket")
+            remove_keyboard("Silakan input nomor tiket",self.chatId)
+        if(tiket[self.chatId].noTiket!=''):
+            if "/input_keterangan" in self.konten[0]:
+                tiket[self.chatId].setState("keterangan")
+                remove_keyboard("Silakan input keterangan",self.chatId)
+            elif "/input_gambar_sebelum" in self.konten[0]:
+                tiket[self.chatId].setState("gambar sebelum")
+                remove_keyboard("Silakan input gambar",self.chatId)
+            elif "/input_gambar_progres" in self.konten[0]:
+                tiket[self.chatId].setState("gambar progres")
+                remove_keyboard("Silakan input gambar",self.chatId)
+            elif "/input_gambar_sesudah" in self.konten[0]:
+                tiket[self.chatId].setState("gambar sesudah")
+                remove_keyboard("Silakan input gambar",self.chatId)
+            elif "/input_lokasi" in self.konten[0]:
+                tiket[self.chatId].setState("lokasi")
+                reply_keyboard("Silakan input lokasi",self.chatId,json_req_location)
+            elif "/input_selesai" in self.konten[0]:
+                tiket[self.chatId].saveData()
+            elif "/review_tiket" in self.konten[0]:
+                tiket[self.chatId].reviewTiket()
+            elif "Edit Data" in self.konten[0]:
+                reply_keyboard("Silakan pilih data yang akan diedit",self.chatId,json_all_comm)
+            else:
+                tiket[self.chatId].send_message("Silakan masukkan perintah yang sesuai")
+        elif (tiket[self.chatId].state!="notiket"):
+            reply_keyboard("Silakan masukkan nomor tiket terlebih dahulu",self.chatId,json_input_tiket)
+        return tiket
+            
+    def cek_konten_sesuai_state(self,tiket):
+        if(tiket[self.chatId].state=="notiket"):
+            if(self.tipeKonten=="text"):
+                if(len(self.konten[0])==10):
+                    records=None
+                    records=select_ticket(self.konten[0])
+                    if(bool(records)):
+                        tiket[self.chatId].setNoTiket(self.konten[0])
+                        tiket[self.chatId].setODP(records)
+                        reply_keyboard("Nomor Tiket: "+tiket[self.chatId].noTiket+" berhasil diinput",self.chatId,json_all_comm)
+                        tiket[self.chatId].setState("none")
+                    else:
+                        tiket[self.chatId].send_message("Tiket yang diinputkan tidak terdaftar. Mohon masukkan kembali")
+                else:
+                    tiket[self.chatId].send_message("Tiket harus terdiri 10 karakter")
+            else:
+                tiket[self.chatId].send_message("Nomor tiket harus berupa teks")
+        elif(tiket[self.chatId].state=="keterangan"):
+            if(self.tipeKonten=="text"):
+                if(len(self.konten[0])<=200):
+                    tiket[self.chatId].setKeterangan(self.konten[0])
+                    reply_keyboard("Keterangan berhasil terinput",self.chatId,json_all_comm)
+                    tiket[self.chatId].setState("none")
+                else:
+                    tiket[self.chatId].send_message("Keterangan tidak boleh lebih dari 30 karakter")
+            else:
+                tiket[self.chatId].send_message("Isi keterangan harus berupa teks")
+        elif(tiket[self.chatId].state=="gambar sebelum"):
+            if(self.tipeKonten=="gambar"):
+                print(self.konten[0])
+                tiket[self.chatId].setGambar(self.konten[0],"sebelum")
+                reply_keyboard("Gambar tampak 'sebelum' berhasil terinput",self.chatId,json_all_comm)
+                tiket[self.chatId].setState("none")
+            else:
+                tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
+        elif(tiket[self.chatId].state=="gambar progres"):
+            if(self.tipeKonten=="gambar"):
+                tiket[self.chatId].setGambar(self.konten[0],"progres")
+                reply_keyboard("Gambar tampak 'progres' berhasil terinput",self.chatId,json_all_comm)
+                tiket[self.chatId].setState("none")
+            else:
+                tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
+        elif(tiket[self.chatId].state=="gambar sesudah"):
+            if(self.tipeKonten=="gambar"):
+                tiket[self.chatId].setGambar(self.konten[0],"sesudah")
+                reply_keyboard("Gambar tampak 'sesudah' berhasil terinput",self.chatId,json_all_comm)
+                tiket[self.chatId].setState("none")
+            else:
+                tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
+        elif(tiket[self.chatId].state=="lokasi"):
+            if(self.tipeKonten=="location"):
+                tiket[self.chatId].setLokasi(self.konten[0],self.konten[1])
+                reply_keyboard("Lokasi berhasil terinput",self.chatId,json_all_comm)
+                tiket[self.chatId].setState("none")
+            else:
+                tiket[self.chatId].send_message("Input lokasi harus berupa lokasi")
+        return tiket
+
             
 
 class Tiket():
@@ -268,9 +361,8 @@ class Tiket():
         js = get_json_from_url(url)
         file_path = js["result"]["file_path"]
         url = URL_FILE + file_path
-        print(url)
         urllib.request.urlretrieve(url,path)
-        
+
     def save_text(self,isitext, namafile):
         file = open(str(self.noTiket)+"/"+namafile+".txt","w") 
         file.write(isitext)
@@ -301,9 +393,6 @@ class Tiket():
     def send_location(self):
         url = URL + "sendlocation?chat_id={}&latitude={}&longitude={}".format(self.chatId, self.latitude, self.longitude)
         get_url(url)
-        
-        
-        
 
 def get_url(url):
     response = requests.get(url)
@@ -336,95 +425,13 @@ def main():
             if(update.chatId!=0):
                 if(tiket[update.chatId].isApproved==1):
                     if(tiket[update.chatId].state=="none"):
-                        if "/input_tiket" in update.konten[0]:
-                            tiket[update.chatId].setState("notiket")
-                            remove_keyboard("Silakan input nomor tiket",update.chatId)
-                        if(tiket[update.chatId].noTiket!=''):
-                            if "/input_keterangan" in update.konten[0]:
-                                tiket[update.chatId].setState("keterangan")
-                                remove_keyboard("Silakan input keterangan",update.chatId)
-                            elif "/input_gambar_sebelum" in update.konten[0]:
-                                tiket[update.chatId].setState("gambar sebelum")
-                                remove_keyboard("Silakan input gambar",update.chatId)
-                            elif "/input_gambar_progres" in update.konten[0]:
-                                tiket[update.chatId].setState("gambar progres")
-                                remove_keyboard("Silakan input gambar",update.chatId)
-                            elif "/input_gambar_sesudah" in update.konten[0]:
-                                tiket[update.chatId].setState("gambar sesudah")
-                                remove_keyboard("Silakan input gambar",update.chatId)
-                            elif "/input_lokasi" in update.konten[0]:
-                                tiket[update.chatId].setState("lokasi")
-                                reply_keyboard("Silakan input lokasi",update.chatId,json_req_location)
-                            elif "/input_selesai" in update.konten[0]:
-                                tiket[update.chatId].saveData()
-                            elif "/review_tiket" in update.konten[0]:
-                                tiket[update.chatId].reviewTiket()
-                            elif "Edit Data" in update.konten[0]:
-                                reply_keyboard("Silakan pilih data yang akan diedit",update.chatId,json_all_comm)
-                            else:
-                                tiket[update.chatId].send_message("Silakan masukkan perintah yang sesuai")
-                        elif (tiket[update.chatId].state!="notiket"):
-                            reply_keyboard("Silakan masukkan nomor tiket terlebih dahulu",update.chatId,json_input_tiket)
+                        tiket=update.cek_command(tiket) 
                     else:
-                        if(tiket[update.chatId].state=="notiket"):
-                            if(update.tipeKonten=="text"):
-                                if(len(update.konten[0])==10):
-                                    records=None
-                                    records=select_ticket(update.konten[0])
-                                    if(bool(records)):
-                                        tiket[update.chatId].setNoTiket(update.konten[0])
-                                        tiket[update.chatId].setODP(records)
-                                        reply_keyboard("Nomor Tiket: "+tiket[update.chatId].noTiket+" berhasil diinput",update.chatId,json_all_comm)
-                                        tiket[update.chatId].setState("none")
-                                    else:
-                                        tiket[update.chatId].send_message("Tiket yang diinputkan tidak terdaftar. Mohon masukkan kembali")
-                                else:
-                                    tiket[update.chatId].send_message("Tiket harus terdiri 10 karakter")
-                            else:
-                                tiket[update.chatId].send_message("Nomor tiket harus berupa teks")
-                        elif(tiket[update.chatId].state=="keterangan"):
-                            if(update.tipeKonten=="text"):
-                                if(len(update.konten[0])<=30):
-                                    tiket[update.chatId].setKeterangan(update.konten[0])
-                                    reply_keyboard("Keterangan berhasil terinput",update.chatId,json_all_comm)
-                                    tiket[update.chatId].setState("none")
-                                else:
-                                    tiket[update.chatId].send_message("Keterangan tidak boleh lebih dari 30 karakter")
-                            else:
-                                tiket[update.chatId].send_message("Isi keterangan harus berupa teks")
-                        elif(tiket[update.chatId].state=="gambar sebelum"):
-                            if(update.tipeKonten=="gambar"):
-                                print(update.konten[0])
-                                tiket[update.chatId].setGambar(update.konten[0],"sebelum")
-                                reply_keyboard("Gambar tampak 'sebelum' berhasil terinput",update.chatId,json_all_comm)
-                                tiket[update.chatId].setState("none")
-                            else:
-                                tiket[update.chatId].send_message("Input gambar harus berupa .jpeg")
-                        elif(tiket[update.chatId].state=="gambar progres"):
-                            if(update.tipeKonten=="gambar"):
-                                tiket[update.chatId].setGambar(update.konten[0],"progres")
-                                reply_keyboard("Gambar tampak 'progres' berhasil terinput",update.chatId,json_all_comm)
-                                tiket[update.chatId].setState("none")
-                            else:
-                                tiket[update.chatId].send_message("Input gambar harus berupa .jpeg")
-                        elif(tiket[update.chatId].state=="gambar sesudah"):
-                            if(update.tipeKonten=="gambar"):
-                                tiket[update.chatId].setGambar(update.konten[0],"sesudah")
-                                reply_keyboard("Gambar tampak 'sesudah' berhasil terinput",update.chatId,json_all_comm)
-                                tiket[update.chatId].setState("none")
-                            else:
-                                tiket[update.chatId].send_message("Input gambar harus berupa .jpeg")
-                        elif(tiket[update.chatId].state=="lokasi"):
-                            if(update.tipeKonten=="location"):
-                                tiket[update.chatId].setLokasi(update.konten[0],update.konten[1])
-                                reply_keyboard("Lokasi berhasil terinput",update.chatId,json_all_comm)
-                                tiket[update.chatId].setState("none")
-                            else:
-                                tiket[update.chatId].send_message("Input lokasi harus berupa lokasi")
+                        tiket=update.cek_konten_sesuai_state(tiket) 
                     try:
                         tiket[update.chatId].print_all()
-                    except AttributeError:
-                        True
+                    except AttributeError as e:
+                        print(e)
                 else:
                     if(tiket[update.chatId].state=="daftar"):
                         if(update.tipeKonten=="text"):
@@ -441,9 +448,7 @@ def main():
                             tiket[update.chatId].setState("daftar")
                             tiket[update.chatId].send_message("kirim dengan format: NIK_NAMA_LOKER")
                         else:    
-                            tiket[update.chatId].send_message("ID Anda belum terdaftar atau belum mendapat izin. Silahkan mendaftar /daftar")
-                    
-                        
+                            tiket[update.chatId].send_message("ID Anda belum terdaftar atau belum mendapat izin. Silahkan mendaftar /daftar")   
             last_textchat = (update.konten, update.chatId)
             
 if __name__ == '__main__':
