@@ -253,8 +253,9 @@ class Tiket():
     
     def setODP(self,records):
         self.ODP["nama"]=records[1]
-        self.ODP["lat"]=float(records[2])
-        self.ODP["long"]=float(records[3])
+        self.ODP["long"]=float(records[2])
+        self.ODP["lat"]=float(records[3])
+        
     
     def setKeterangan(self,keterangan):
         self.keterangan = keterangan
@@ -300,7 +301,12 @@ class Tiket():
             print(e)
         try:
             dist=self.calc_distance()
-            
+            if(dist>=50):
+                self.send_message("Jarak ketika upload laporan harus kurang dari 50 m. jarak anda dengan ODP adalah "+str(dist)+" m")
+                return
+            if((self.gambarSebelum==self.gambarSesudah) or (self.gambarProgres==self.gambarSesudah) or (self.gambarSebelum==self.gambarProgres)):
+                self.send_message("Gambar yang dikirimkan tidak boleh ada yang sama")
+                return
             try:
                 for name in glob.glob(file_path+'/'+self.noTiket+'?.txt'):
                     os.remove(name)
@@ -376,10 +382,13 @@ class Tiket():
         o2 = math.radians(lat2)
         delta1 = math.radians(lat2-self.latitude)
         delta2 = math.radians(lon2-self.longitude)
-    
+        print((lon2,lat2))
+        print((self.longitude,self.latitude))
         a = math.sin(delta1/2) * math.sin(delta1/2) + math.cos(o1) * math.cos(o2) * math.sin(delta2/2) * math.sin(delta2/2)
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
         d = R * c
+        print(c)
+        print(d)
         return(d)
         
     def send_message(self, text):
