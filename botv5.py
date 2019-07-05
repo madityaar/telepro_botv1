@@ -8,6 +8,7 @@ import MySQLdb
 import os
 import datetime
 import glob
+import time
 #from tiket2 import Tiket, Update
 
 
@@ -24,6 +25,7 @@ try:
     # you must create a Cursor object. It will let
     # you execute all the queries you need
     cur = db.cursor()
+    print("database connected")
 except:
     print("database not connected")
     
@@ -44,7 +46,7 @@ def insert_row_user(data):
     db.close()
 
 def update_row_odp(tiket,dist):
-    sql="update mytable set photo_before='"+tiket.noTiket+"-a"+"', photo_process='"+tiket.noTiket+"-b"+"', photo_after='"+tiket.noTiket+"-c"+"', longitude_u="+str(tiket.longitude)+", latitude_u="+str(tiket.longitude)+", distance="+str(dist)+", updated_by="+tiket.chatId+", updated_date=SYSDATE(),keterangan='"+tiket.keterangan+"' where ticket_id='"+tiket.noTiket+"'"
+    sql="update mytable set photo_before='"+tiket.noTiket+"-a"+"', photo_process='"+tiket.noTiket+"-b"+"', photo_after='"+tiket.noTiket+"-c"+"', longitude_u="+str(tiket.longitude)+", latitude_u="+str(tiket.latitude)+", distance="+str(dist)+", updated_by="+tiket.chatId+", updated_date=SYSDATE(),keterangan='"+tiket.keterangan+"' where ticket_id='"+tiket.noTiket+"'"
     cur.execute(sql)
     db.commit()
 
@@ -300,13 +302,8 @@ class Tiket():
         except FileExistsError as e:
             print(e)
         try:
-            dist=self.calc_distance()
-            if(dist>=50):
-                self.send_message("Jarak ketika upload laporan harus kurang dari 50 m. jarak anda dengan ODP adalah "+str(dist)+" m")
-                return
-            if((self.gambarSebelum==self.gambarSesudah) or (self.gambarProgres==self.gambarSesudah) or (self.gambarSebelum==self.gambarProgres)):
-                self.send_message("Gambar yang dikirimkan tidak boleh ada yang sama")
-                return
+            dist=round(self.calc_distance())
+            
             try:
                 for name in glob.glob(file_path+'/'+self.noTiket+'?.txt'):
                     os.remove(name)
@@ -336,31 +333,46 @@ class Tiket():
     def reviewTiket(self):
         self.send_message("Isi tiket")
         self.send_message("noTiket: "+self.noTiket)
+        dist=0
         status=True
         if(self.keterangan!=""):
             self.send_message("keterangan: "+self.keterangan)
         else:
+            self.send_message("Keterangan belum diinputkan")
             status=False
         if(self.gambarSebelum!=""):
             self.send_file(self.gambarSebelum,"Gambar Sebelum")
         else:
+            self.send_message("Gambar 'sebelum' belum diinputkan")
             status=False
         if(self.gambarProgres!=""):
             self.send_file(self.gambarProgres,"Gambar Progres")
         else:
+            self.send_message("Gambar 'progres' belum diinputkan")
             status=False
         if(self.gambarSesudah!=""):
             self.send_file(self.gambarSesudah,"Gambar Sesudah")
         else:
+            self.send_message("Gambar 'sesudah' belum diinputkan")
             status=False
         if(self.latitude!=""):
             self.send_location()
+            dist=round(self.calc_distance())
+            self.send_message("Jarak anda dengan ODP adalah "+str(dist)+" m")
         else:
+            self.send_message("Lokasi belum diinputkan")
             status=False
+        if(dist>100):
+            self.send_message("Jarak yang dikirimkan melebihi 100 m.")
+        if((self.gambarSebelum==self.gambarSesudah) or (self.gambarProgres==self.gambarSesudah) or (self.gambarSebelum==self.gambarProgres)):
+            self.send_message("Gambar yang dikirimkan terdeteksi serupa.")
+    
+    
+
         if(status):   
             reply_keyboard("Edit Kembali atau Submit?",self.chatId,json_aft_review)
         else:
-            reply_keyboard("Data belum lengkap. Sila lengkapi kembali",self.chatId,json_all_comm)
+            reply_keyboard("Data belum lengkap atau gambar ada yang sama. Silakan lengkapi atau ganti",self.chatId,json_all_comm)
         
     def save_file(self, fileId,path):
         url = URL + "getFile?file_id={}".format(fileId)
@@ -459,6 +471,7 @@ def main():
                         else:    
                             tiket[update.chatId].send_message("ID Anda belum terdaftar atau belum mendapat izin. Silahkan mendaftar /daftar")   
             last_textchat = (update.konten, update.chatId)
+            time.sleep(0.1)
             
 if __name__ == '__main__':
     main()
