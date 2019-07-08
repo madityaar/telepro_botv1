@@ -69,14 +69,16 @@ def select_ticket(ticket):
 ###########
 
 data1={"keyboard": [["/input_tiket"]],"one_time_keyboard": True}
-data2={"keyboard": [["/input_keterangan"],["/input_gambar_sebelum"],["/input_gambar_progres"],["/input_gambar_sesudah"],["/input_lokasi"],["/review_tiket"]],"one_time_keyboard": True,"resize_keyboard": True}
-data3={"keyboard": [[{"text":"kirim lokasi","request_location":True}]],"one_time_keyboard": True,"resize_keyboard": True}
+data2={"keyboard": [["/input_keterangan"],["/input_gambar_sebelum"],["/input_gambar_progres"],["/input_gambar_sesudah"],["/input_lokasi"],["/review_tiket"],["/kirim_contoh"]],"one_time_keyboard": True,"resize_keyboard": True}
+data3={"keyboard": [[{"text":"kirim lokasi","request_location":True}],["/cancel"]],"one_time_keyboard": True,"resize_keyboard": True}
 data4={"keyboard": [["Edit Data"],["/input_selesai"]],"one_time_keyboard": True}
+data5={"keyboard": [["/cancel"]],"one_time_keyboard": True}
 
 json_input_tiket=json.dumps(data1)
 json_all_comm=json.dumps(data2)
 json_req_location=json.dumps(data3)
 json_aft_review=json.dumps(data4)
+json_cancel=json.dumps(data5)
 
 def reply_keyboard(text,chatId,djson):
     url = URL + "sendMessage?text={}&chat_id={}&reply_markup={}".format(text,chatId, djson)
@@ -142,20 +144,20 @@ class Update():
     def cek_command(self,tiket):
         if "/input_tiket" in self.konten[0]:
             tiket[self.chatId].setState("notiket")
-            remove_keyboard("Silakan input nomor tiket",self.chatId)
+            reply_keyboard("Silakan input nomor tiket",self.chatId,json_cancel)
         if(tiket[self.chatId].noTiket!=''):
             if "/input_keterangan" in self.konten[0]:
                 tiket[self.chatId].setState("keterangan")
-                remove_keyboard("Silakan input keterangan",self.chatId)
+                reply_keyboard("Silakan input keterangan",self.chatId,json_cancel)
             elif "/input_gambar_sebelum" in self.konten[0]:
                 tiket[self.chatId].setState("gambar sebelum")
-                remove_keyboard("Silakan input gambar",self.chatId)
+                reply_keyboard("Silakan input gambar",self.chatId,json_cancel)
             elif "/input_gambar_progres" in self.konten[0]:
                 tiket[self.chatId].setState("gambar progres")
-                remove_keyboard("Silakan input gambar",self.chatId)
+                reply_keyboard("Silakan input gambar",self.chatId,json_cancel)
             elif "/input_gambar_sesudah" in self.konten[0]:
                 tiket[self.chatId].setState("gambar sesudah")
-                remove_keyboard("Silakan input gambar",self.chatId)
+                reply_keyboard("Silakan input gambar",self.chatId,json_cancel)
             elif "/input_lokasi" in self.konten[0]:
                 tiket[self.chatId].setState("lokasi")
                 reply_keyboard("Silakan input lokasi",self.chatId,json_req_location)
@@ -163,6 +165,15 @@ class Update():
                 tiket[self.chatId].saveData()
             elif "/review_tiket" in self.konten[0]:
                 tiket[self.chatId].reviewTiket()
+            elif "/cancel" in self.konten[0]:
+                tiket[self.chatId].setState('none')
+            elif "/kirim_contoh" in self.konten[0]:
+                try:
+                    tiket[self.chatId].sendImage("contoh/1.jpg","Contoh gambar 'sebelum' yang ideal")
+                    tiket[self.chatId].sendImage("contoh/2.jpg","Contoh gambar 'progres' yang ideal")
+                    tiket[self.chatId].sendImage("contoh/3.jpg","Contoh gambar 'sesudah' yang ideal")
+                except:
+                    print('error sending image')
             elif "Edit Data" in self.konten[0]:
                 reply_keyboard("Silakan pilih data yang akan diedit",self.chatId,json_all_comm)
             else:
@@ -172,7 +183,11 @@ class Update():
         return tiket
             
     def cek_konten_sesuai_state(self,tiket):
-        if(tiket[self.chatId].state=="notiket"):
+        if(self.konten[0]=="/cancel"):
+            string_rep="Input "+tiket[self.chatId].state+" dibatalkan"
+            tiket[self.chatId].setState("none")
+            reply_keyboard(string_rep,self.chatId,json_all_comm)
+        elif(tiket[self.chatId].state=="notiket"):
             if(self.tipeKonten=="text"):
                 if(len(self.konten[0])==10):
                     records=None
@@ -402,6 +417,16 @@ class Tiket():
         print(c)
         print(d)
         return(d)
+        
+    def sendImage(self,path,caption):
+        url_send = URL+"sendPhoto";
+        print(url_send)
+        files = {'photo': open(path, 'rb')}
+        print(files)
+        data = {'chat_id' : self.chatId,'caption':caption}
+        r= requests.post(url_send, files=files, data=data)
+        print(r)
+        print(r.status_code, r.reason, r.content)
         
     def send_message(self, text):
         url = URL + "sendMessage?text={}&chat_id={}".format(text, self.chatId)
