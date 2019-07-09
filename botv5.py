@@ -120,6 +120,8 @@ class Update():
             try:
                 self.konten[0]=updates["result"][last_update]["message"]["text"]
                 self.tipeKonten="text"
+                self.konten[0] = self.konten[0].replace('"', '|')
+                self.konten[0] = self.konten[0].replace("'", "|")
             ###identifikasi jika isi berupa teks###
             except KeyError:
                 ###identifikasi jika isi berupa lokasi###
