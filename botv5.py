@@ -15,6 +15,8 @@ import time
 TOKEN = "743391112:AAF60UYlsEhkgb9qU-APK5nqxffhTb9LMbY"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 URL_FILE = "https://api.telegram.org/file/bot{}/".format(TOKEN)
+max_dist=50
+
 ###########
 try:
     db = MySQLdb.connect(host="localhost",    # your host, usually localhost
@@ -30,7 +32,7 @@ except:
     print("database not connected")
     
 def insert_row(data):
-    cur.execute("INSERT INTO tiket (no_tiket,gambar_sebelum,gambar_sesudah,keterangan,latitude,longitude) VALUES ('"+data['no_tiket']+"','"+data['gambar_sebelum']+"','"+data['gambar_sesudah']+"','"+data['keterangan']+"','"+data['latitude'] +"','"+data['longitude']+"')")
+    cur.execute("INSERT INTO tiket (no_tiket,gambar_sebelum,gambar_sesudah,keterangan,latitude,longitude) VALUES ('{}','{}','{}','{}','{}','{}')".format(data['no_tiket'],data['gambar_sebelum'],data['gambar_sesudah'],data['keterangan'],data['latitude'],data['longitude']))
     db.commit()
 
 def isApproved(idchat):
@@ -46,25 +48,23 @@ def insert_row_user(data):
     db.close()
 
 def update_row_odp(tiket,dist):
-    sql="update mytable set photo_before='"+tiket.noTiket+"-a"+"', photo_process='"+tiket.noTiket+"-b"+"', photo_after='"+tiket.noTiket+"-c"+"', longitude_u="+str(tiket.longitude)+", latitude_u="+str(tiket.latitude)+", distance="+str(dist)+", updated_by="+tiket.chatId+", updated_date=SYSDATE(),keterangan='"+tiket.keterangan+"' where ticket_id='"+tiket.noTiket+"'"
+    sql="update mytable set photo_before='{}-a', photo_process='{}-b', photo_after='{}-c', longitude_u={}, latitude_u={}, distance={}, updated_by={}, updated_date=SYSDATE(),keterangan='{}' where ticket_id='{}'".format(tiket.noTiket,tiket.noTiket,tiket.noTiket,str(tiket.longitude),str(tiket.latitude),str(dist),tiket.chatId,tiket.keterangan,tiket.noTiket)
     cur.execute(sql)
     db.commit()
 
 def daftar(chatid,array):
-    sql="INSERT INTO userapproval VALUES ('"+str(chatid)+"','"+array[0]+"','"+array[1].upper()+"','"+array[2].upper()+"',1)"
+    sql="INSERT INTO userapproval VALUES ('{}','{}','{}','{}',1)".format(str(chatid),array[0],array[1].upper(),array[2].upper())
     cur.execute(sql)
     db.commit()
 
 def select_ticket(ticket):
-    sql="select ticket_id,ODP, longitude, latitude from mytable where ticket_id='"+str(ticket)+"'"
+    sql="select ticket_id,ODP, longitude, latitude from mytable where ticket_id='{}'".format(str(ticket))
     cur.execute(sql)
     empty=()
     records = cur.fetchall()
     if(records==empty):
-        print('a')
         return None
     else:
-        print('b')
         return records[0]
 ###########
 
@@ -171,9 +171,7 @@ class Update():
                 tiket[self.chatId].setState('none')
             elif "/kirim_contoh" in self.konten[0]:
                 try:
-                    tiket[self.chatId].sendImage("contoh/1.jpg","Contoh gambar 'sebelum' yang ideal")
-                    tiket[self.chatId].sendImage("contoh/2.jpg","Contoh gambar 'progres' yang ideal")
-                    tiket[self.chatId].sendImage("contoh/3.jpg","Contoh gambar 'sesudah' yang ideal")
+                    tiket[self.chatId].kirimContoh()
                 except:
                     print('error sending image')
             elif "Edit Data" in self.konten[0]:
@@ -186,9 +184,12 @@ class Update():
             
     def cek_konten_sesuai_state(self,tiket):
         if(self.konten[0]=="/cancel"):
-            string_rep="Input "+tiket[self.chatId].state+" dibatalkan"
+            string_rep="Input {} dibatalkan".format(tiket[self.chatId].state)
             tiket[self.chatId].setState("none")
-            reply_keyboard(string_rep,self.chatId,json_all_comm)
+            if(tiket[self.chatId].state=="notiket"):
+                reply_keyboard(string_rep,self.chatId,json_input_tiket)
+            else:
+                reply_keyboard(string_rep,self.chatId,json_all_comm)
         elif(tiket[self.chatId].state=="notiket"):
             if(self.tipeKonten=="text"):
                 if(len(self.konten[0])==10):
@@ -197,7 +198,7 @@ class Update():
                     if(bool(records)):
                         tiket[self.chatId].setNoTiket(self.konten[0])
                         tiket[self.chatId].setODP(records)
-                        reply_keyboard("Nomor Tiket: "+tiket[self.chatId].noTiket+" berhasil diinput",self.chatId,json_all_comm)
+                        reply_keyboard("Nomor Tiket: {} berhasil diinput".format(tiket[self.chatId].noTiket),self.chatId,json_all_comm)
                         tiket[self.chatId].setState("none")
                     else:
                         tiket[self.chatId].send_message("Tiket yang diinputkan tidak terdaftar. Mohon masukkan kembali")
@@ -295,15 +296,15 @@ class Tiket():
     
     def print_all(self):
         print("isi tiket")
-        print("chat id: "+self.chatId)
-        print("noTiket: "+self.noTiket)
-        print("keterangan: "+self.keterangan)
-        print("fileId Gambar Sebelum: "+self.gambarSebelum)
-        print("fileId Gambar Progres: "+self.gambarProgres)
-        print("fileId Gambar Sesudah: "+self.gambarSesudah)
-        print("latitude: "+str(self.latitude))
-        print("longitude: "+str(self.longitude))
-        print("state: "+self.state+"\n")
+        print("chat id: {}".format(self.chatId))
+        print("noTiket: {}".format(self.noTiket))
+        print("keterangan: {}".format(self.keterangan))
+        print("fileId Gambar Sebelum: {}".format(self.gambarSebelum))
+        print("fileId Gambar Progres: {}".format(self.gambarProgres))
+        print("fileId Gambar Sesudah: {}".format(self.gambarSesudah))
+        print("latitude: {}".format(str(self.latitude)))
+        print("longitude: {}".format(str(self.longitude)))
+        print("state: {}\n".format(self.state))
     
     def saveData(self):
         now = datetime.datetime.now()
@@ -331,7 +332,7 @@ class Tiket():
                 True
             try:
                 update_row_odp(self,dist)
-                self.send_message("Tiket dengan No. "+self.noTiket+" selesai diinputkan")
+                self.send_message("Tiket dengan No. {} selesai diinputkan".format(self.noTiket))
             except (MySQLdb.Error, MySQLdb.Warning) as e:
                 print(e)
                 self.send_message(e)
@@ -349,11 +350,11 @@ class Tiket():
     
     def reviewTiket(self):
         self.send_message("Isi tiket")
-        self.send_message("noTiket: "+self.noTiket)
+        self.send_message("noTiket: {}".format(self.noTiket))
         dist=0
         status=True
         if(self.keterangan!=""):
-            self.send_message("keterangan: "+self.keterangan)
+            self.send_message("keterangan: {}".format(self.keterangan))
         else:
             self.send_message("Keterangan belum diinputkan")
             status=False
@@ -375,17 +376,15 @@ class Tiket():
         if(self.latitude!=""):
             self.send_location()
             dist=round(self.calc_distance())
-            self.send_message("Jarak anda dengan ODP adalah "+str(dist)+" m")
+            self.send_message("Jarak anda dengan ODP adalah {} m".format(str(dist)))
         else:
             self.send_message("Lokasi belum diinputkan")
             status=False
-        if(dist>100):
-            self.send_message("Jarak yang dikirimkan melebihi 100 m.")
+        if(dist>max_dist):
+            self.send_message("Jarak yang dikirimkan melebihi {} m.".format(max_dist))
         if((self.gambarSebelum==self.gambarSesudah) or (self.gambarProgres==self.gambarSesudah) or (self.gambarSebelum==self.gambarProgres)):
             self.send_message("Gambar yang dikirimkan terdeteksi serupa.")
     
-    
-
         if(status):   
             reply_keyboard("Edit Kembali atau Submit?",self.chatId,json_aft_review)
         else:
@@ -421,14 +420,15 @@ class Tiket():
         return(d)
         
     def sendImage(self,path,caption):
-        url_send = URL+"sendPhoto";
-        print(url_send)
-        files = {'photo': open(path, 'rb')}
-        print(files)
-        data = {'chat_id' : self.chatId,'caption':caption}
-        r= requests.post(url_send, files=files, data=data)
-        print(r)
-        print(r.status_code, r.reason, r.content)
+        try:
+            url_send = URL+"sendPhoto";
+            print(url_send)
+            files = {'photo': open(path, 'rb')}
+            print(files)
+            data = {'chat_id' : self.chatId,'caption':caption}
+            requests.post(url_send, files=files, data=data)
+        except:
+            print("send image gagal")
         
     def send_message(self, text):
         url = URL + "sendMessage?text={}&chat_id={}".format(text, self.chatId)
@@ -441,6 +441,12 @@ class Tiket():
     def send_location(self):
         url = URL + "sendlocation?chat_id={}&latitude={}&longitude={}".format(self.chatId, self.latitude, self.longitude)
         get_url(url)
+        
+    def kirimContoh(self):
+        self.sendImage("contoh/1.jpg","Contoh gambar 'sebelum' yang ideal")
+        self.sendImage("contoh/2.jpg","Contoh gambar 'progres' yang ideal")
+        self.sendImage("contoh/3.jpg","Contoh gambar 'sesudah' yang ideal")
+                
 
 def get_url(url):
     response = requests.get(url)
