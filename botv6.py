@@ -70,25 +70,8 @@ def select_ticket(ticket):
         return records[0]
 ###########
 
-data1={"keyboard": [["/input_tiket"]],"one_time_keyboard": True}
-data2={"keyboard": [["/input_keterangan"],["/input_gambar_ODC-RK-MSAN"],["/input_gambar_ODP-RP"],["/input_gambar_saluran_penanggal"],["/input_gambar_tiang"],["/input_lokasi"],["/review_tiket"],["/kirim_contoh"]],"one_time_keyboard": True,"resize_keyboard": True}
-data3={"keyboard": [[{"text":"kirim lokasi","request_location":True}],["/cancel"]],"one_time_keyboard": True,"resize_keyboard": True}
-data4={"keyboard": [["Edit Data"],["/input_selesai"]],"one_time_keyboard": True}
-data5={"keyboard": [["/cancel"]],"one_time_keyboard": True}
-data6={"keyboard": [["ODC A"],["ODC B"],["/cancel"]],"one_time_keyboard": True}
-data7={"keyboard": [["ODP A"],["ODP B"],["ODP C"],["/cancel"]],"one_time_keyboard": True}
-data8={"keyboard": [["sebelum"],["progres"],["sesudah"],["/cancel"]],"one_time_keyboard": True}
 
-json_input_tiket=json.dumps(data1)
-json_all_comm=json.dumps(data2)
-json_req_location=json.dumps(data3)
-json_aft_review=json.dumps(data4)
-json_cancel=json.dumps(data5)
-json_odc_lv2=json.dumps(data6)
-json_odp_lv2=json.dumps(data7)
-json_bfraft=json.dumps(data8)
 
-print()
 
 def reply_keyboard(text,chatId,djson):
     url = URL + "sendMessage?text={}&chat_id={}&reply_markup={}".format(text,chatId, djson)
@@ -99,6 +82,58 @@ def remove_keyboard(text, chatId):
     url = URL + "sendMessage?text={}&chat_id={}&reply_markup={}".format(text,chatId, json_remove)
     get_url(url)
 ######
+data1={"keyboard": [["/input_tiket"]],"one_time_keyboard": True}
+data3={"keyboard": [[{"text":"kirim lokasi","request_location":True}],["/cancel"]],"one_time_keyboard": True,"resize_keyboard": True}
+data4={"keyboard": [["Edit Data"],["/input_selesai"]],"one_time_keyboard": True}
+data5={"keyboard": [["/cancel"]],"one_time_keyboard": True}
+json_input_tiket=json.dumps(data1)
+json_req_location=json.dumps(data3)
+json_aft_review=json.dumps(data4)
+json_cancel=json.dumps(data5)
+    
+    
+class Keyboard():
+    def __init__(self):
+        data2={"keyboard": [["/input_keterangan"],["/input_gambar_ODC-RK-MSAN"],["/input_gambar_ODP-RP"],["/input_gambar_saluran_penanggal"],["/input_gambar_tiang"],["/input_lokasi"],["/review_tiket"],["/kirim_contoh"]],"one_time_keyboard": True,"resize_keyboard": True}
+        json_all_comm=json.dumps(data2)
+        data6={"keyboard": [["ODC A"],["ODC B"],["/cancel"]],"one_time_keyboard": True}
+        data7={"keyboard": [["ODP A"],["ODP B"],["ODP C"],["/cancel"]],"one_time_keyboard": True}
+        data8={"keyboard": [["sebelum"],["progres"],["sesudah"],["/cancel"]],"one_time_keyboard": True}
+        json_odc_lv2=json.dumps(data6)
+        json_odp_lv2=json.dumps(data7)
+        json_bfraft=json.dumps(data8)
+        self.json_lvl_1=json_all_comm
+        self.json_ODC_lvl_2=json_odc_lv2
+        self.json_ODP_lvl_2=json_odp_lv2
+        self.json_ODCA_lvl_3=json_bfraft
+        self.json_ODCB_lvl_3=json_bfraft
+        self.json_ODPA_lvl_3=json_bfraft
+        self.json_ODPB_lvl_3=json_bfraft
+        self.json_ODPC_lvl_3=json_bfraft
+        self.json_tiang_lvl_2=json_bfraft
+        self.json_saluran_lvl_2=json_bfraft
+    
+    def cekKeyboardGambar(self):
+        a= json.dumps({"keyboard": [["/cancel"]], "one_time_keyboard": True})
+        if(self.json_ODCA_lvl_3==a):
+            self.json_ODC_lvl_2=self.json_ODC_lvl_2.replace('["ODC A"], ','')
+        if(self.json_ODCB_lvl_3==a):
+            self.json_ODC_lvl_2=self.json_ODC_lvl_2.replace('["ODC B"], ','')
+        if(self.json_ODPA_lvl_3==a):
+            self.json_ODP_lvl_2=self.json_ODP_lvl_2.replace('["ODP A"], ','')
+        if(self.json_ODPB_lvl_3==a):
+            self.json_ODP_lvl_2=self.json_ODP_lvl_2.replace('["ODP B"], ','')
+        if(self.json_ODPC_lvl_3==a):
+            self.json_ODP_lvl_2=self.json_ODP_lvl_2.replace('["ODP C"], ','')
+        if(self.json_saluran_lvl_2==a):
+            self.json_lvl_1=self.json_lvl_1.replace('["/input_gambar_saluran_penanggal"], ','')
+        if(self.json_tiang_lvl_2==a):
+            self.json_lvl_1=self.json_lvl_1.replace('["/input_gambar_tiang"], ','')
+        if(self.json_ODC_lvl_2==a):
+            self.json_lvl_1=self.json_lvl_1.replace('["/input_gambar_ODC-RK-MSAN"], ','')
+        if(self.json_ODP_lvl_2==a):
+            self.json_lvl_1=self.json_lvl_1.replace('["/input_gambar_ODP-RP"], ','')
+        
 
 class Update():
     def __init__(self, konten=[None,None],chatId=None,tipeKonten=None,offset=0):
@@ -161,20 +196,18 @@ class Update():
             if "/input_keterangan" in self.konten[0]:
                 tiket[self.chatId].setState("keterangan")
                 reply_keyboard("Silakan input keterangan",self.chatId,json_cancel)
-                
-            elif "/input_gambar_ODC/RK/MSAN" in self.konten[0]:
+            elif "/input_gambar_ODC-RK-MSAN" in self.konten[0]:
                 tiket[self.chatId].setState("gambar ODC")
-                reply_keyboard("Pilih ODC",self.chatId,json_odc_lv2)
-
-            elif "/input_gambar_ODP/RP" in self.konten[0]:
+                reply_keyboard("Pilih ODC",self.chatId,tiket[self.chatId].keyboard.json_ODC_lvl_2)
+            elif "/input_gambar_ODP-RP" in self.konten[0]:
                 tiket[self.chatId].setState("gambar ODP")
-                reply_keyboard("Pilih ODP",self.chatId,json_odp_lv2)
+                reply_keyboard("Pilih ODP",self.chatId,tiket[self.chatId].keyboard.json_ODP_lvl_2)
             elif "/input_gambar_saluran_penanggal" in self.konten[0]:
                 tiket[self.chatId].setState("gambar saluran")
-                reply_keyboard("Silakan pilih kondisi ",self.chatId,json_bfraft)
+                reply_keyboard("Silakan pilih kondisi ",self.chatId,tiket[self.chatId].keyboard.json_saluran_lvl_2)
             elif "/input_gambar_tiang" in self.konten[0]:
                 tiket[self.chatId].setState("gambar tiang")
-                reply_keyboard("Silakan pilih kondisi ",self.chatId,json_bfraft)
+                reply_keyboard("Silakan pilih kondisi ",self.chatId,tiket[self.chatId].keyboard.json_tiang_lvl_2)
                 
             elif "/input_lokasi" in self.konten[0]:
                 tiket[self.chatId].setState("lokasi")
@@ -192,7 +225,7 @@ class Update():
                 except:
                     print('error sending image')
             elif "Edit Data" in self.konten[0]:
-                reply_keyboard("Silakan pilih data yang akan diedit",self.chatId,json_all_comm)
+                reply_keyboard("Silakan pilih data yang akan diedit",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
             else:
                 tiket[self.chatId].send_message("Silakan masukkan perintah yang sesuai")
         elif (tiket[self.chatId].state!="notiket"):
@@ -206,7 +239,7 @@ class Update():
             if(tiket[self.chatId].state=="notiket"):
                 reply_keyboard(string_rep,self.chatId,json_input_tiket)
             else:
-                reply_keyboard(string_rep,self.chatId,json_all_comm)
+                reply_keyboard(string_rep,self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
         elif(tiket[self.chatId].state=="notiket"):
             if(self.tipeKonten=="text"):
                 if(len(self.konten[0])==max_tiket):
@@ -215,7 +248,7 @@ class Update():
                     if(bool(records)):
                         tiket[self.chatId].setNoTiket(self.konten[0])
                         tiket[self.chatId].setODP(records)
-                        reply_keyboard("Nomor Tiket: {} berhasil diinput".format(tiket[self.chatId].noTiket),self.chatId,json_all_comm)
+                        reply_keyboard("Nomor Tiket: {} berhasil diinput".format(tiket[self.chatId].noTiket),self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                         tiket[self.chatId].setState("none")
                     else:
                         tiket[self.chatId].send_message("Tiket yang diinputkan tidak terdaftar. Mohon masukkan kembali")
@@ -227,7 +260,7 @@ class Update():
             if(self.tipeKonten=="text"):
                 if(len(self.konten[0])<=max_keterangan):
                     tiket[self.chatId].setKeterangan(self.konten[0])
-                    reply_keyboard("Keterangan berhasil terinput",self.chatId,json_all_comm)
+                    reply_keyboard("Keterangan berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                     tiket[self.chatId].setState("none")
                 else:
                     tiket[self.chatId].send_message("Keterangan tidak boleh lebih dari 30 karakter")
@@ -238,10 +271,10 @@ class Update():
             if(self.tipeKonten=="text"):
                 if(self.konten[0]=="ODC A"):
                     tiket[self.chatId].setState("gambar ODC A")   
-                    reply_keyboard("Silakan pilih kondisi",self.chatId,json_bfraft)
+                    reply_keyboard("Silakan pilih kondisi",self.chatId,tiket[self.chatId].keyboard.json_ODCA_lvl_3)
                 elif(self.konten[0]=="ODC B"):
                     tiket[self.chatId].setState("gambar ODC B")
-                    reply_keyboard("Silakan pilih kondisi",self.chatId,json_bfraft)
+                    reply_keyboard("Silakan pilih kondisi",self.chatId,tiket[self.chatId].keyboard.json_ODCB_lvl_3)
             else:
                 tiket[self.chatId].send_message("Pilih menu sesuai yang tersedia")
 #### MENU TINGKAT 3 ODC
@@ -263,21 +296,21 @@ class Update():
         elif(tiket[self.chatId].state=="gambar ODC A sebelum"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODC A sebelum berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODC A sebelum berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg") 
         elif(tiket[self.chatId].state=="gambar ODC A progres"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODC A progres berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODC A progres berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
         elif(tiket[self.chatId].state=="gambar ODC A sesudah"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODC A sesudah berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODC A sesudah berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
@@ -300,21 +333,21 @@ class Update():
         elif(tiket[self.chatId].state=="gambar ODC B sebelum"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODC B sebelum berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODC B sebelum berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg") 
         elif(tiket[self.chatId].state=="gambar ODC B progres"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODC B progres berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODC B progres berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
         elif(tiket[self.chatId].state=="gambar ODC B sesudah"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODC B sesudah berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODC B sesudah berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
@@ -324,13 +357,13 @@ class Update():
             if(self.tipeKonten=="text"):
                 if(self.konten[0]=="ODP A"):
                     tiket[self.chatId].setState("gambar ODP A")   
-                    reply_keyboard("Silakan pilih kondisi",self.chatId,json_bfraft)
+                    reply_keyboard("Silakan pilih kondisi",self.chatId,tiket[self.chatId].keyboard.json_ODPA_lvl_3)
                 elif(self.konten[0]=="ODP B"):
                     tiket[self.chatId].setState("gambar ODP B")
-                    reply_keyboard("Silakan pilih kondisi",self.chatId,json_bfraft)
+                    reply_keyboard("Silakan pilih kondisi",self.chatId,tiket[self.chatId].keyboard.json_ODPB_lvl_3)
                 elif(self.konten[0]=="ODP C"):
                     tiket[self.chatId].setState("gambar ODP C")
-                    reply_keyboard("Silakan pilih kondisi",self.chatId,json_bfraft)
+                    reply_keyboard("Silakan pilih kondisi",self.chatId,tiket[self.chatId].keyboard.json_ODPC_lvl_3)
             else:
                 tiket[self.chatId].send_message("Pilih menu sesuai yang tersedia")
 #### MENU TINGKAT 3 ODP
@@ -379,21 +412,21 @@ class Update():
         elif(tiket[self.chatId].state=="gambar ODP A sebelum"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP A sebelum berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP A sebelum berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg") 
         elif(tiket[self.chatId].state=="gambar ODP A progres"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP A progres berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP A progres berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
         elif(tiket[self.chatId].state=="gambar ODP A sesudah"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP A sesudah berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP A sesudah berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
@@ -401,21 +434,21 @@ class Update():
         elif(tiket[self.chatId].state=="gambar ODP B sebelum"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP B sebelum berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP B sebelum berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg") 
         elif(tiket[self.chatId].state=="gambar ODP B progres"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP B progres berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP B progres berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
         elif(tiket[self.chatId].state=="gambar ODP B sesudah"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP B sesudah berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP B sesudah berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
@@ -423,21 +456,21 @@ class Update():
         elif(tiket[self.chatId].state=="gambar ODP C sebelum"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP C sebelum berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP C sebelum berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg") 
         elif(tiket[self.chatId].state=="gambar ODP C progres"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP C progres berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP C progres berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
         elif(tiket[self.chatId].state=="gambar ODP C sesudah"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar ODP C sesudah berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar ODP C sesudah berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
@@ -459,21 +492,21 @@ class Update():
         elif(tiket[self.chatId].state=="gambar saluran sebelum"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar saluran sebelum berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar saluran sebelum berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg") 
         elif(tiket[self.chatId].state=="gambar saluran progres"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar saluran progres berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar saluran progres berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
         elif(tiket[self.chatId].state=="gambar saluran sesudah"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar saluran sesudah berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar saluran sesudah berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
@@ -495,21 +528,21 @@ class Update():
         elif(tiket[self.chatId].state=="gambar tiang sebelum"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar tiang sebelum berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar tiang sebelum berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg") 
         elif(tiket[self.chatId].state=="gambar tiang progres"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar tiang progres berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar tiang progres berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
         elif(tiket[self.chatId].state=="gambar tiang sesudah"):
             if(self.tipeKonten=="gambar"):
                 tiket[self.chatId].setGambar(self.konten[0],tiket[self.chatId].state)
-                reply_keyboard("Gambar tiang sesudah berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Gambar tiang sesudah berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input gambar harus berupa .jpeg")
@@ -518,7 +551,7 @@ class Update():
         elif(tiket[self.chatId].state=="lokasi"):
             if(self.tipeKonten=="location"):
                 tiket[self.chatId].setLokasi(self.konten[0],self.konten[1])
-                reply_keyboard("Lokasi berhasil terinput",self.chatId,json_all_comm)
+                reply_keyboard("Lokasi berhasil terinput",self.chatId,tiket[self.chatId].keyboard.json_lvl_1)
                 tiket[self.chatId].setState("none")
             else:
                 tiket[self.chatId].send_message("Input lokasi harus berupa lokasi")
@@ -527,7 +560,7 @@ class Update():
             
 
 class Tiket():
-    def __init__(self, chatId='',noTiket='',keterangan = '',gambar= defaultdict(dict),latitude='',longitude='', state="none", isApproved=0, ODP={"nama":"","lat":None,"long":None}):
+    def __init__(self, chatId='',noTiket='',keterangan = '',gambar= defaultdict(dict),latitude='',longitude='', state="none", isApproved=0, ODP={"nama":"","lat":None,"long":None},keyboard=Keyboard()):
         self.chatId = str(chatId)
         self.noTiket = noTiket
         self.keterangan = keterangan 
@@ -560,6 +593,8 @@ class Tiket():
         self.gambar["tiang"]["progres"]=""
         self.gambar["tiang"]["sesudah"]=""
         
+        self.keyboard= keyboard
+        
         self.latitude= latitude
         self.longitude= longitude
         self.state= state
@@ -583,63 +618,88 @@ class Tiket():
     
     def setKeterangan(self,keterangan):
         self.keterangan = keterangan
+        self.keyboard.json_lvl_1=self.keyboard.json_lvl_1.replace('["/input_keterangan"], ','')
     def setIsApproved(self, isApproved):
         self.isApproved = isApproved
     
     def setGambar(self,fileId,nama):
         if(nama=='gambar ODC A sebelum'):
             self.gambar["ODCA"]["sebelum"] = str(fileId)
+            self.keyboard.json_ODCA_lvl_3=self.keyboard.json_ODCA_lvl_3.replace('["sebelum"], ','')
         elif(nama=='gambar ODC A progres'):
             self.gambar["ODCA"]["progres"] = str(fileId)
+            self.keyboard.json_ODCA_lvl_3=self.keyboard.json_ODCA_lvl_3.replace('["progres"], ','')
         elif(nama=='gambar ODC A sesudah'):
             self.gambar["ODCA"]["sesudah"] = str(fileId)
+            self.keyboard.json_ODCA_lvl_3=self.keyboard.json_ODCA_lvl_3.replace('["sesudah"], ','')
             
         elif(nama=='gambar ODC B sebelum'):
             self.gambar["ODCB"]["sebelum"] = str(fileId)
+            self.keyboard.json_ODCB_lvl_3=self.keyboard.json_ODCB_lvl_3.replace('["sebelum"], ','')
         elif(nama=='gambar ODC B progres'):
             self.gambar["ODCB"]["progres"] = str(fileId)
+            self.keyboard.json_ODCB_lvl_3=self.keyboard.json_ODCB_lvl_3.replace('["progres"], ','')
         elif(nama=='gambar ODC B sesudah'):
             self.gambar["ODCB"]["sesudah"] = str(fileId)
+            self.keyboard.json_ODCB_lvl_3=self.keyboard.json_ODCB_lvl_3.replace('["sesudah"], ','')
             
         elif(nama=='gambar ODP A sebelum'):
             self.gambar["ODPA"]["sebelum"] = str(fileId)
+            self.keyboard.json_ODPA_lvl_3=self.keyboard.json_ODPA_lvl_3.replace('["sebelum"], ','')
         elif(nama=='gambar ODP A progres'):
             self.gambar["ODPA"]["progres"] = str(fileId)
+            self.keyboard.json_ODPA_lvl_3=self.keyboard.json_ODPA_lvl_3.replace('["progres"], ','')
         elif(nama=='gambar ODP A sesudah'):
             self.gambar["ODPA"]["sesudah"] = str(fileId)
+            self.keyboard.json_ODPA_lvl_3=self.keyboard.json_ODPA_lvl_3.replace('["sesudah"], ','')
             
         elif(nama=='gambar ODP B sebelum'):
             self.gambar["ODPB"]["sebelum"] = str(fileId)
+            self.keyboard.json_ODPB_lvl_3=self.keyboard.json_ODPB_lvl_3.replace('["sebelum"], ','')
         elif(nama=='gambar ODP B progres'):
             self.gambar["ODPB"]["progres"] = str(fileId)
+            self.keyboard.json_ODPB_lvl_3=self.keyboard.json_ODPB_lvl_3.replace('["progres"], ','')
         elif(nama=='gambar ODP B sesudah'):
             self.gambar["ODPC"]["sesudah"] = str(fileId)
+            self.keyboard.json_ODPB_lvl_3=self.keyboard.json_ODPB_lvl_3.replace('["sesudah"], ','')
             
         elif(nama=='gambar ODP C sebelum'):
             self.gambar["ODPC"]["sebelum"] = str(fileId)
+            self.keyboard.json_ODPC_lvl_3=self.keyboard.json_ODPC_lvl_3.replace('["sebelum"], ','')
         elif(nama=='gambar ODP C progres'):
             self.gambar["ODPC"]["progres"] = str(fileId)
+            self.keyboard.json_ODPC_lvl_3=self.keyboard.json_ODPC_lvl_3.replace('["progres"], ','')
         elif(nama=='gambar ODP C sesudah'):
             self.gambar["ODPC"]["sesudah"] = str(fileId)
+            self.keyboard.json_ODPC_lvl_3=self.keyboard.json_ODPC_lvl_3.replace('["sesudah"], ','')
             
         elif(nama=='gambar saluran sebelum'):
             self.gambar["saluran"]["sebelum"] = str(fileId)
+            self.keyboard.json_saluran_lvl_2=self.keyboard.json_saluran_lvl_2.replace('["sebelum"], ','')
         elif(nama=='gambar saluran progres'):
             self.gambar["saluran"]["progres"] = str(fileId)
+            self.keyboard.json_saluran_lvl_2=self.keyboard.json_saluran_lvl_2.replace('["progres"], ','')
         elif(nama=='gambar saluran sesudah'):
             self.gambar["saluran"]["sesudah"] = str(fileId)
+            self.keyboard.json_saluran_lvl_2=self.keyboard.json_saluran_lvl_2.replace('["sesudah"], ','')
             
         elif(nama=='gambar tiang sebelum'):
             self.gambar["tiang"]["sebelum"] = str(fileId)
+            self.keyboard.json_tiang_lvl_2=self.keyboard.json_tiang_lvl_2.replace('["sebelum"], ','')
         elif(nama=='gambar tiang progres'):
             self.gambar["tiang"]["progres"] = str(fileId)
+            self.keyboard.json_tiang_lvl_2=self.keyboard.json_tiang_lvl_2.replace('["progres"], ','')
         elif(nama=='gambar tiang sesudah'):
             self.gambar["tiang"]["sesudah"] = str(fileId)
+            self.keyboard.json_tiang_lvl_2=self.keyboard.json_tiang_lvl_2.replace('["sesudah"], ','')
+        
+        self.keyboard.cekKeyboardGambar()
             
             
     def setLokasi(self,latitude,longitude):
         self.latitude=latitude
         self.longitude=longitude
+        self.keyboard.json_lvl_1=self.keyboard.json_lvl_1.replace('["/input_lokasi"], ','')
     
     def print_all(self):
         print("isi tiket")
@@ -852,7 +912,7 @@ class Tiket():
         if(status):   
             reply_keyboard("Edit Kembali atau Submit?",self.chatId,json_aft_review)
         else:
-            reply_keyboard("Data belum lengkap atau gambar ada yang sama. Silakan lengkapi atau ganti",self.chatId,json_all_comm)
+            reply_keyboard("Data belum lengkap atau gambar ada yang sama. Silakan lengkapi atau ganti",self.chatId,self.keyboard.json_lvl_1)
         
     def save_file(self, fileId,path):
         url = URL + "getFile?file_id={}".format(fileId)
