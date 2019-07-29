@@ -69,12 +69,11 @@ def select_ticket(ticket):
 ###########
 
 data1={"keyboard": [["/input_tiket"]],"one_time_keyboard": True}
-data2={"keyboard": [["/input_keterangan"],["/input_gambar_ODP/RK/MSAN"],["/input_gambar_ODP/DP"],["/input_gambar_saluran_penanggal"],["/input_gambar_tiang"],["/input_lokasi"],["/review_tiket"],["/kirim_contoh"]],"one_time_keyboard": True,"resize_keyboard": True}
+data2={"keyboard": [["/input_keterangan"],["/input_gambar_sebelum"],["/input_gambar_progres"],["/input_gambar_sesudah"],["/input_lokasi"],["/review_tiket"],["/kirim_contoh"]],"one_time_keyboard": True,"resize_keyboard": True}
 data3={"keyboard": [[{"text":"kirim lokasi","request_location":True}],["/cancel"]],"one_time_keyboard": True,"resize_keyboard": True}
 data4={"keyboard": [["Edit Data"],["/input_selesai"]],"one_time_keyboard": True}
 data5={"keyboard": [["/cancel"]],"one_time_keyboard": True}
-data6={"keyboard": [["/ODC A"]],[["/ODC B"]],"one_time_keyboard": True}
-data6={"keyboard": [["/ODP A"]],[["/ODP B"]],[["/ODP C"]],"one_time_keyboard": True}
+
 
 json_input_tiket=json.dumps(data1)
 json_all_comm=json.dumps(data2)
@@ -153,18 +152,15 @@ class Update():
             if "/input_keterangan" in self.konten[0]:
                 tiket[self.chatId].setState("keterangan")
                 reply_keyboard("Silakan input keterangan",self.chatId,json_cancel)
-            elif "/input_gambar_ODC/RK/MSAN" in self.konten[0]:
-                tiket[self.chatId].setState("gambar ODC/RK/MSAN")
-                reply_keyboard("Silakan input gambar ODC/RK/MSAN",self.chatId,json_cancel)
-            elif "/input_gambar_ODP/DP" in self.konten[0]:
-                tiket[self.chatId].setState("gambar ODP/DP")
-                reply_keyboard("Silakan input gambar ODP/DP",self.chatId,json_cancel)
-            elif "/input_gambar_saluran_penaggal" in self.konten[0]:
-                tiket[self.chatId].setState("gambar saluran penanggal")
-                reply_keyboard("Silakan input gambar saluran penaggal",self.chatId,json_cancel)
-            elif "/input_gambar_tiang" in self.konten[0]:
-                tiket[self.chatId].setState("gambar tiang")
-                reply_keyboard("Silakan input gambar tiang",self.chatId,json_cancel)    
+            elif "/input_gambar_sebelum" in self.konten[0]:
+                tiket[self.chatId].setState("gambar sebelum")
+                reply_keyboard("Silakan input gambar",self.chatId,json_cancel)
+            elif "/input_gambar_progres" in self.konten[0]:
+                tiket[self.chatId].setState("gambar progres")
+                reply_keyboard("Silakan input gambar",self.chatId,json_cancel)
+            elif "/input_gambar_sesudah" in self.konten[0]:
+                tiket[self.chatId].setState("gambar sesudah")
+                reply_keyboard("Silakan input gambar",self.chatId,json_cancel)
             elif "/input_lokasi" in self.konten[0]:
                 tiket[self.chatId].setState("lokasi")
                 reply_keyboard("Silakan input lokasi",self.chatId,json_req_location)
