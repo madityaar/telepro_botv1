@@ -12,12 +12,13 @@ import MySQLdb
 import os
 import datetime
 import glob
-import keyboard
+
+import keyboardcls
 import general 
 import database
 
 class Tiket():
-    def __init__(self, chatId='',noTiket='',keterangan = '',gambar= defaultdict(dict),latitude='',longitude='', state="none", isApproved=0, ODP={"nama":"","lat":None,"long":None},keyboard=keyboard.Keyboard()):
+    def __init__(self, chatId='',noTiket='',keterangan = '',gambar= defaultdict(dict),latitude='',longitude='', state="none", isApproved=0, ODP={"nama":"","lat":None,"long":None},keyboard=keyboardcls.Keyboard()):
         self.chatId = str(chatId)
         self.noTiket = noTiket
         self.keterangan = keterangan 
@@ -245,6 +246,7 @@ class Tiket():
             self.latitude= ''
             self.longitude= ''
             self.state= 'none'
+            self.keyboard.resetKeyboard()
         except KeyError:
             self.send_message("Data yang diinputkan belum lengkap")
     

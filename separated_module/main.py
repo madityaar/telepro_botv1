@@ -11,8 +11,6 @@ import database
 
 ###########
 
-
-
 def main():
     database.connect_db()
     update = updatecls.Update()
